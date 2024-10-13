@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/bate_ponto_screen.dart';
-import 'screens/registro_batida.dart';
+import 'routes/routes.dart';
 
 void main() {
   runApp(MyApp());
@@ -14,12 +13,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: '/batePonto', 
-      routes: {
-        '/batePonto': (context) => const BatePontoScreen(),
-        '/registroBatida': (context) => const RegistroBatidaScreen(),
-        // '/configuracoes': (context) => ConfiguracoesScreen(),
-      },
+      initialRoute: AppRoutes.home, 
+      routes: AppRoutes.routes, 
     );
   }
 }

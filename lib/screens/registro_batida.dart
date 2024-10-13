@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../components/awesome_bottom_bar.dart'; 
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegistroBatidaScreen extends StatefulWidget {
   const RegistroBatidaScreen({super.key});
@@ -26,33 +26,36 @@ void didChangeDependencies() {
   }
 }
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-    _navigateToScreen(context, index); 
-  }
+ 
 
-  void _navigateToScreen(BuildContext context, int index) {
-    switch (index) {
-      case 0: 
-        Navigator.pushReplacementNamed(context, '/batePonto');
-        break;
-      case 1: 
-        break;
-      case 2: 
-        Navigator.pushReplacementNamed(context, '/configuracoes');
-        break;
-    }
-  }
+  
+
+  Future<void> _loadBatidas() async {
+  final prefs = await SharedPreferences.getInstance();
+  List<String> pontos = prefs.getStringList('batidas') ?? [];
+  
+  historicoPonto = pontos.map((ponto) {
+    Map<String, String> pontoMap = {};
+    ponto.split(', ').forEach((entry) {
+      final keyValue = entry.split(': ');
+      if (keyValue.length == 2) {
+        pontoMap[keyValue[0].trim()] = keyValue[1].trim();
+      }
+    });
+    return pontoMap;
+  }).toList();
+
+  setState(() {});
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
+        // automaticallyImplyLeading: false,
         title:const Text('Historio de Batidas', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.grey[900], 
+        backgroundColor: Color(0xFF536493), 
         elevation: 0,
         actions: [
           IconButton(
@@ -62,7 +65,7 @@ void didChangeDependencies() {
           )
         ],
       ),
-      backgroundColor: Colors.grey[900], 
+      backgroundColor: Color(0xFF536493), 
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -101,11 +104,6 @@ void didChangeDependencies() {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: AwesomeBottomBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-
       ),
     );
   }

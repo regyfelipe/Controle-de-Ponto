@@ -15,7 +15,7 @@ class CircularProgressPainter extends CustomPainter {
 
     final Paint progressPaint = Paint()
       ..shader = LinearGradient(
-        colors: [Colors.blue, Colors.cyanAccent],
+        colors: [Colors.white, Colors.cyanAccent],
       ).createShader(Rect.fromCircle(center: Offset(size.width / 2, size.height / 2), radius: size.width / 2))
       ..strokeWidth = 10
       ..style = PaintingStyle.stroke

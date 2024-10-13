@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
-import '../components/awesome_bottom_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../widgets/circularProgress.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../notifications/notification_service.dart';
@@ -18,22 +19,21 @@ class _BatePontoScreenState extends State<BatePontoScreen>
     with SingleTickerProviderStateMixin {
   late Timer _timer;
   late DateTime _currentTime;
-  int _currentIndex = 0;
-
-  double _progress = 0; 
+  double _progress = 0;
   final NotificationService _notificationService = NotificationService();
+  String? _ultimoPonto; 
 
   @override
   void initState() {
     super.initState();
     _currentTime = DateTime.now();
-
     _notificationService.initializeNotifications();
+    _loadUltimoPonto(); 
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _currentTime = DateTime.now();
-        _progress = (_currentTime.second % 60) / 60; 
+        _progress = (_currentTime.second % 60) / 60;
       });
     });
   }
@@ -48,6 +48,43 @@ class _BatePontoScreenState extends State<BatePontoScreen>
     return DateFormat('HH:mm:ss').format(time);
   }
 
+  Future<void> _saveUltimoPonto(String horario) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('ultimoPonto', horario);
+  }
+
+  Future<void> _savePonto() async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    final formattedTime = formatTime(now);
+
+    final newEntry = {
+      'data': DateFormat('dd/MM').format(now),
+      'entrada': formattedTime,
+      'saida': '-',
+      'saldo': '0:00',
+    };
+
+    List<String> pontos = prefs.getStringList('batidas') ?? [];
+    pontos.add(newEntry.toString());
+
+    await prefs.setStringList('batidas', pontos);
+    await _saveUltimoPonto(formattedTime);
+
+    setState(() {
+      _ultimoPonto = formattedTime;
+    });
+  }
+
+  Future<void> _loadUltimoPonto() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ultimoPonto = prefs.getString('ultimoPonto');
+    print('Carregando último ponto: $ultimoPonto');
+    setState(() {
+      _ultimoPonto = ultimoPonto;
+    });
+  }
+
   void _showConfirmationDialog() {
     showDialog(
       context: context,
@@ -60,6 +97,8 @@ class _BatePontoScreenState extends State<BatePontoScreen>
               body: 'Você bateu o ponto com sucesso!',
             );
 
+            _savePonto();
+
             final now = DateTime.now();
             final newEntry = {
               'data': DateFormat('dd/MM').format(now),
@@ -68,7 +107,7 @@ class _BatePontoScreenState extends State<BatePontoScreen>
               'saldo': '0:00',
             };
 
-            Navigator.pushReplacementNamed(context, '/registroBatida', arguments: newEntry);
+            Navigator.pushReplacementNamed(context, '/home', arguments: newEntry);
           },
         );
       },
@@ -78,14 +117,14 @@ class _BatePontoScreenState extends State<BatePontoScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[900],
+      backgroundColor: const Color(0xFF536493),
       body: Center(
         child: Stack(
           alignment: Alignment.center,
           children: [
             CustomPaint(
               size: const Size(300, 300),
-              painter: CircularProgressPainter(_progress), 
+              painter: CircularProgressPainter(_progress),
             ),
             Column(
               mainAxisSize: MainAxisSize.min,
@@ -113,18 +152,11 @@ class _BatePontoScreenState extends State<BatePontoScreen>
                     style: TextStyle(fontSize: 20, color: Colors.white),
                   ),
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: AwesomeBottomBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
       ),
     );
   }
